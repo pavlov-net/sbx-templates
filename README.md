@@ -8,11 +8,11 @@ A shared **base** image contains common tooling, with thin per-language layers o
 
 ```
 docker/sandbox-templates:claude-code-minimal
-  └── base
-        ├─��� bun       (Bun + TypeScript LSP)
-        ├── rust      (Rust + rust-analyzer)
-        ├── golang    (Go + gopls)
-        └── python    (Python/uv + Pyright)
+  +-- base
+        +-- bun       (Bun + TypeScript LSP)
+        +-- rust      (Rust + rust-analyzer)
+        +-- golang    (Go + gopls)
+        +-- python    (Python/uv + Pyright)
 ```
 
 ## What's in the base image
