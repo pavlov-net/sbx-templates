@@ -4,5 +4,27 @@
     "config:best-practices",
     ":automergeDigest",
     ":automergePatch"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update go install versions in Dockerfiles",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "go install (?<depName>[^@]+)@(?<currentValue>v\\S+)"
+      ],
+      "datasourceTemplate": "go"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Update checksums when yq or delta versions are bumped",
+      "matchDepNames": ["mikefarah/yq", "dandavison/delta"],
+      "postUpgradeTasks": {
+        "commands": ["bash scripts/update-checksums.sh"],
+        "fileFilters": ["base/Dockerfile"],
+        "executionMode": "update"
+      }
+    }
   ]
 }

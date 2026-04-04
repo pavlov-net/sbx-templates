@@ -1,11 +1,50 @@
+# --- Stage 1: Verify cosign binary via TUF root of trust ---
+FROM golang:latest AS cosign-verify
+
+# renovate: datasource=github-releases depName=sigstore/cosign
+ARG COSIGN_VERSION=3.0.5
+
+RUN apt-get update && apt-get install -y --no-install-recommends jq && rm -rf /var/lib/apt/lists/*
+RUN <<EOF
+set -e
+mkdir -p /out
+
+# Install TUF client (v2)
+go install github.com/theupdateframework/go-tuf/v2/examples/cli/tuf-client@v2.4.1
+
+# Bootstrap TUF from Sigstore's published root (10th iteration, per docs)
+cd /tmp
+curl -fsSL -o root.json \
+  https://raw.githubusercontent.com/sigstore/root-signing/refs/heads/main/metadata/root_history/10.root.json
+tuf-client init --url https://tuf-repo-cdn.sigstore.dev -f root.json
+
+# Retrieve Sigstore's artifact verification key via TUF
+tuf-client get --url https://tuf-repo-cdn.sigstore.dev --turl https://tuf-repo-cdn.sigstore.dev/targets artifact.pub
+
+# artifact.pub is downloaded to tuf_download/ in cwd (/tmp)
+ARCH=$(dpkg --print-architecture)
+curl -fsSL -o /out/cosign \
+  "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-${ARCH}"
+curl -fsSL -o /tmp/cosign-kms.sigstore.json \
+  "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-${ARCH}-kms.sigstore.json"
+
+# Verify cosign binary with artifact key (per Sigstore docs for v3.x)
+cat /tmp/cosign-kms.sigstore.json | jq -r .messageSignature.signature | base64 -d > /tmp/cosign-kms.sig
+openssl dgst -sha256 -verify /tmp/tuf_download/artifact.pub -signature /tmp/cosign-kms.sig /out/cosign
+
+chmod +x /out/cosign
+EOF
+
+# --- Stage 2: Main image ---
 FROM docker/sandbox-templates:claude-code-minimal@sha256:88fd0f6650667e832b87fe0aea413076d32e9b1475ec0ba2ab0b7bf64269c79e
 
+# renovate: datasource=github-releases depName=sigstore/gitsign
 ARG GITSIGN_VERSION=0.14.0
-ARG GITSIGN_SHA256_AMD64=23fcc3d71e0abcbc635b1b95dbe758ac08773e3642b407646c32c3cf4c6def74
-ARG GITSIGN_SHA256_ARM64=adaa11fb9557618737fc127be1e2f236eee3c11d97c5499d2b4a7018b28252af
-ARG GITSIGN_CC_SHA256_AMD64=5fef099124c92f4c5b3b7ade2f28db73b143a93ac526d6e171da13a5d9a0093e
-ARG GITSIGN_CC_SHA256_ARM64=58b1f741b5a629edf452c3133b4c7cf2905128f8ca7cdebbbf8b6ff52db827f0
+# renovate: datasource=github-releases depName=dandavison/delta
 ARG DELTA_VERSION=0.19.2
+ARG DELTA_SHA256_AMD64=ea4f0222950ee750a3d38dd80d03bce4cee07a3f63928fc47548383bcaf23093
+ARG DELTA_SHA256_ARM64=0edc36cf514f1bd84becac3e94ee8ae9f8818c6a1f99f7b2ee67b362afa253d3
+# renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=4.52.5
 ARG YQ_SHA256_AMD64=75d893a0d5940d1019cb7cdc60001d9e876623852c31cfc6267047bc31149fa9
 ARG YQ_SHA256_ARM64=90fa510c50ee8ca75544dbfffed10c88ed59b36834df35916520cddc623d9aaa
@@ -50,16 +89,30 @@ apt-get update && apt-get install -y --no-install-recommends \
 
 # Cleanup apt caches
 apt-get clean && rm -rf /var/lib/apt/lists/*
+EOF
 
-# Gitsign (keyless commit signing via Sigstore)
+# Cosign (TUF-verified in stage 1)
+COPY --from=cosign-verify /out/cosign /usr/local/bin/cosign
+
+RUN <<EOF
+set -e
+
+# Gitsign (keyless commit signing via Sigstore) — verified with cosign
 ARCH=$(dpkg --print-architecture)
-GITSIGN_SHA256=$([ "$ARCH" = "amd64" ] && echo "$GITSIGN_SHA256_AMD64" || echo "$GITSIGN_SHA256_ARM64")
-GITSIGN_CC_SHA256=$([ "$ARCH" = "amd64" ] && echo "$GITSIGN_CC_SHA256_AMD64" || echo "$GITSIGN_CC_SHA256_ARM64")
-curl -fsSL "https://github.com/sigstore/gitsign/releases/download/v${GITSIGN_VERSION}/gitsign_${GITSIGN_VERSION}_linux_${ARCH}" -o /usr/local/bin/gitsign
-curl -fsSL "https://github.com/sigstore/gitsign/releases/download/v${GITSIGN_VERSION}/gitsign-credential-cache_${GITSIGN_VERSION}_linux_${ARCH}" -o /usr/local/bin/gitsign-credential-cache
-echo "${GITSIGN_SHA256}  /usr/local/bin/gitsign" | sha256sum -c -
-echo "${GITSIGN_CC_SHA256}  /usr/local/bin/gitsign-credential-cache" | sha256sum -c -
-chmod +x /usr/local/bin/gitsign /usr/local/bin/gitsign-credential-cache
+GITSIGN_BASE="https://github.com/sigstore/gitsign/releases/download/v${GITSIGN_VERSION}"
+for bin in gitsign gitsign-credential-cache; do
+  ARTIFACT="${bin}_${GITSIGN_VERSION}_linux_${ARCH}"
+  curl -fsSL "${GITSIGN_BASE}/${ARTIFACT}" -o "/usr/local/bin/${bin}"
+  curl -fsSL "${GITSIGN_BASE}/${ARTIFACT}.sig" -o "/tmp/${bin}.sig"
+  curl -fsSL "${GITSIGN_BASE}/${ARTIFACT}.pem" -o "/tmp/${bin}.pem"
+  cosign verify-blob "/usr/local/bin/${bin}" \
+    --signature "/tmp/${bin}.sig" \
+    --certificate "/tmp/${bin}.pem" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    --certificate-identity-regexp "^https://github.com/sigstore/gitsign/"
+  rm "/tmp/${bin}.sig" "/tmp/${bin}.pem"
+  chmod +x "/usr/local/bin/${bin}"
+done
 
 # yq (jq for YAML)
 YQ_SHA256=$([ "$ARCH" = "amd64" ] && echo "$YQ_SHA256_AMD64" || echo "$YQ_SHA256_ARM64")
@@ -68,7 +121,9 @@ echo "${YQ_SHA256}  /usr/local/bin/yq" | sha256sum -c -
 chmod +x /usr/local/bin/yq
 
 # git-delta (syntax-highlighted diffs)
-curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_$(dpkg --print-architecture).deb" -o /tmp/git-delta.deb
+DELTA_SHA256=$([ "$ARCH" = "amd64" ] && echo "$DELTA_SHA256_AMD64" || echo "$DELTA_SHA256_ARM64")
+curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_${ARCH}.deb" -o /tmp/git-delta.deb
+echo "${DELTA_SHA256}  /tmp/git-delta.deb" | sha256sum -c -
 dpkg -i /tmp/git-delta.deb
 rm /tmp/git-delta.deb
 
