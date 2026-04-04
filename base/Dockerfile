@@ -1,5 +1,5 @@
 # --- Stage 1: Verify cosign binary via TUF root of trust ---
-FROM golang:latest AS cosign-verify
+FROM golang:1.24@sha256:595c784dc10e58d4dab18e05e2cb70e423dbde441bdb9e2a9a105e9c8b67acd7 AS cosign-verify
 
 # renovate: datasource=github-releases depName=sigstore/cosign
 ARG COSIGN_VERSION=3.0.5

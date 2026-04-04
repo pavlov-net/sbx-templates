@@ -8,6 +8,14 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Update versioned ARGs in Dockerfiles",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\nARG \\w+=(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
       "description": "Update go install versions in Dockerfiles",
       "fileMatch": ["(^|/)Dockerfile$"],
       "matchStrings": [
