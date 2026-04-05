@@ -35,7 +35,21 @@ openssl dgst -sha256 -verify /tmp/tuf_download/artifact.pub -signature /tmp/cosi
 chmod +x /out/cosign
 EOF
 
-# --- Stage 2: Main image ---
+# --- Stage 2: Build gascity (gc) from source ---
+FROM golang:1.26@sha256:595c7847cff97c9a9e76f015083c481d26078f961c9c8dca3923132f51fe12f1 AS gascity-build
+
+ARG GASCITY_VERSION=1af897c4001da28c55369a5a97d4a603fa60190e
+
+RUN <<EOF
+set -e
+git clone --no-checkout https://github.com/gastownhall/gascity.git /src
+cd /src
+git fetch --depth 1 origin ${GASCITY_VERSION}
+git checkout FETCH_HEAD
+make install
+EOF
+
+# --- Stage 3: Main image ---
 FROM docker/sandbox-templates:claude-code-minimal@sha256:88fd0f6650667e832b87fe0aea413076d32e9b1475ec0ba2ab0b7bf64269c79e
 
 # renovate: datasource=github-releases depName=sigstore/gitsign
@@ -93,6 +107,9 @@ EOF
 
 # Cosign (TUF-verified in stage 1)
 COPY --from=cosign-verify /out/cosign /usr/local/bin/cosign
+
+# gascity CLI (built from source in stage 2)
+COPY --from=gascity-build /go/bin/gc /usr/local/bin/gc
 
 RUN <<EOF
 set -e
