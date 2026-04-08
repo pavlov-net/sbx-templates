@@ -3,6 +3,12 @@ name: Build and Push Images
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      no-cache:
+        description: "Rebuild without Docker layer cache (picks up updated Claude plugins, etc.)"
+        type: boolean
+        default: false
 
 concurrency:
   group: build-push-${{ github.ref }}
@@ -49,6 +55,7 @@ jobs:
         with:
           context: base
           push: true
+          no-cache: ${{ inputs.no-cache || false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -87,6 +94,7 @@ jobs:
         with:
           context: ${{ matrix.image }}
           push: true
+          no-cache: ${{ inputs.no-cache || false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
