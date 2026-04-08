@@ -18,7 +18,7 @@ sfw bun install -g pyright
 # Shell config
 echo 'alias pip="sfw pip"' >> ~/.zshrc
 echo 'alias uv="sfw uv"' >> ~/.zshrc
-sed -i 's/plugins=(git gh docker tmux fzf)/plugins=(git gh docker tmux fzf python pip)/' ~/.zshrc
+sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 python pip)/' ~/.zshrc
 
 # Claude plugins — language-specific
 claude plugin install pyright-lsp@claude-plugins-official

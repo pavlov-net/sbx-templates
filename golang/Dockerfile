@@ -11,14 +11,14 @@ ARCH=$(dpkg --print-architecture)
 curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -C /usr/local -xz
 EOF
 
+ENV PATH="/usr/local/go/bin:/home/agent/go/bin:${PATH}"
+
 USER agent
 RUN <<EOF
 set -e
 
-# Go environment
-export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-echo 'export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"' >> ~/.zshrc
-sed -i 's/plugins=(git gh docker tmux fzf)/plugins=(git gh docker tmux fzf golang)/' ~/.zshrc
+# Append golang plugin to the oh-my-zsh plugins list (zsh-only sugar)
+sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 golang)/' ~/.zshrc
 
 # gopls LSP
 go install golang.org/x/tools/gopls@latest
