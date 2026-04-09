@@ -18,14 +18,12 @@ set -e
 
 # Rust toolchain via rustup, installed to /opt/rust. --no-modify-path
 # keeps it from touching any shell rc files (we manage PATH via ENV).
-RUSTUP_HOME=/opt/rust/rustup \
-CARGO_HOME=/opt/rust/cargo \
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+curl -fsSL https://sh.rustup.rs -o /tmp/install-rustup.sh
+RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo sh /tmp/install-rustup.sh -y --no-modify-path
+rm /tmp/install-rustup.sh
 
-# rust-analyzer LSP (ships via rustup component)
-RUSTUP_HOME=/opt/rust/rustup \
-CARGO_HOME=/opt/rust/cargo \
-/opt/rust/cargo/bin/rustup component add rust-analyzer
+# rust-analyzer LSP (ships via rustup component).
+RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo /opt/rust/cargo/bin/rustup component add rust-analyzer
 
 # sfw shim for cargo, pointing at the system /opt install.
 cat > /opt/socket/bin/cargo <<SHIM
