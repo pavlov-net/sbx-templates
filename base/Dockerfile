@@ -62,15 +62,70 @@ ARG DELTA_SHA256_ARM64=0edc36cf514f1bd84becac3e94ee8ae9f8818c6a1f99f7b2ee67b362a
 ARG YQ_VERSION=4.52.5
 ARG YQ_SHA256_AMD64=75d893a0d5940d1019cb7cdc60001d9e876623852c31cfc6267047bc31149fa9
 ARG YQ_SHA256_ARM64=90fa510c50ee8ca75544dbfffed10c88ed59b36834df35916520cddc623d9aaa
+# renovate: datasource=npm depName=bun
+ARG BUN_VERSION=1.3.11
+ARG BUN_SHA256_AMD64=8611ba935af886f05a6f38740a15160326c15e5d5d07adef966130b4493607ed
+ARG BUN_SHA256_ARM64=d13944da12a53ecc74bf6a720bd1d04c4555c038dfe422365356a7be47691fdf
+# renovate: datasource=github-releases depName=SocketDev/sfw-free
+ARG SFW_VERSION=1.6.1
+ARG SFW_SHA256_AMD64=4a1e8b65e90fce7d5fd066cf0af6c93d512065fa4222a475c8d959a6bc14b9ff
+ARG SFW_SHA256_ARM64=df2eedb2daf2572eee047adb8bfd81c9069edcb200fc7d3710fca98ec3ca81a1
+
+# Explicit locale + terminal settings so tools don't silently depend on
+# upstream base image defaults.
+ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 USER root
 RUN <<EOF
 set -e
 
-# Bun runtime (system-wide — used by all images for npm/npx and LSP servers)
-curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
-ln -sf /usr/local/bin/bun /usr/local/bin/npm
-ln -sf /usr/local/bin/bunx /usr/local/bin/npx
+ARCH=$(dpkg --print-architecture)
+
+# Bun runtime — pinned GitHub release + SHA256 (instead of the unpinned
+# curl https://bun.sh/install | bash path). Extracted to /opt/bun/bin
+# so the sfw shims in /opt/socket/bin can wrap it unambiguously.
+case "$ARCH" in
+  amd64) BUN_ARCH=x64; BUN_SHA256="$BUN_SHA256_AMD64" ;;
+  arm64) BUN_ARCH=aarch64; BUN_SHA256="$BUN_SHA256_ARM64" ;;
+  *) echo "unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+curl -fsSL "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-${BUN_ARCH}.zip" -o /tmp/bun.zip
+echo "${BUN_SHA256}  /tmp/bun.zip" | sha256sum -c -
+mkdir -p /opt/bun/bin
+unzip -q -j /tmp/bun.zip "bun-linux-${BUN_ARCH}/bun" -d /opt/bun/bin
+chmod +x /opt/bun/bin/bun
+rm /tmp/bun.zip
+
+# Socket Firewall (sfw) — pinned release + SHA256, installed alongside
+# PATH-level shims that wrap bun/bunx/npm/npx. Shims beat shell aliases
+# because they work in every execution context (default CMD, docker exec,
+# subprocesses spawned by Claude Code, bash as well as zsh).
+case "$ARCH" in
+  amd64) SFW_ARCH=x86_64; SFW_SHA256="$SFW_SHA256_AMD64" ;;
+  arm64) SFW_ARCH=arm64;  SFW_SHA256="$SFW_SHA256_ARM64" ;;
+  *) echo "unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+mkdir -p /opt/socket/bin
+curl -fsSL "https://github.com/SocketDev/sfw-free/releases/download/v${SFW_VERSION}/sfw-free-linux-${SFW_ARCH}" -o /opt/socket/bin/sfw
+echo "${SFW_SHA256}  /opt/socket/bin/sfw" | sha256sum -c -
+chmod +x /opt/socket/bin/sfw
+
+# Shim generator: each shim is a real executable on PATH that unconditionally
+# wraps the target binary through sfw. bunx/npx route to "bun x".
+for cmd in bun bunx npm npx; do
+  case "$cmd" in
+    bunx|npx) real="/opt/bun/bin/bun x" ;;
+    *)        real="/opt/bun/bin/bun" ;;
+  esac
+  cat > "/opt/socket/bin/${cmd}" <<SHIM
+#!/bin/bash
+exec /opt/socket/bin/sfw ${real} "\$@"
+SHIM
+  chmod +x "/opt/socket/bin/${cmd}"
+done
 
 # Add third-party apt repos before updating
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -143,21 +198,23 @@ curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSIO
 echo "${DELTA_SHA256}  /tmp/git-delta.deb" | sha256sum -c -
 dpkg -i /tmp/git-delta.deb
 rm /tmp/git-delta.deb
-
-# Socket Firewall (supply chain protection for package installs)
-ARCH=$(uname -m) && [ "$ARCH" = "aarch64" ] && ARCH="arm64"
-curl -fsSL "https://github.com/SocketDev/sfw-free/releases/latest/download/sfw-free-linux-${ARCH}" -o /usr/local/bin/sfw
-chmod +x /usr/local/bin/sfw
 EOF
+
+# PATH: shim dir first, then /opt/bun/bin (real bun), then the inherited
+# base PATH, then bun's per-user global install dir at the end (so bun
+# install -g targets are discoverable without winning over the shims).
+ENV PATH="/opt/socket/bin:/opt/bun/bin:${PATH}:/home/agent/.bun/bin"
 
 USER agent
 RUN <<EOF
 set -e
 
 # oh-my-zsh + shell config
+# NOTE: do NOT prepend ~/.local/bin to PATH here — it's already in the
+# image's ENV PATH, and prepending it in .zshrc would push it ahead of
+# /opt/socket/bin and bypass the sfw shims in interactive zsh.
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 sed -i 's/plugins=(git)/plugins=(git gh docker tmux fzf)/' ~/.zshrc
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 printf 'set -g mouse on\nset -g history-limit 50000\nset -g default-terminal "tmux-256color"\n' > ~/.tmux.conf
 
 # Claude Code settings — merge into existing settings from base image

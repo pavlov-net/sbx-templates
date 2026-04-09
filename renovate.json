@@ -26,8 +26,8 @@
   ],
   "packageRules": [
     {
-      "description": "Update checksums when yq or delta versions are bumped",
-      "matchDepNames": ["mikefarah/yq", "dandavison/delta"],
+      "description": "Update checksums when pinned tool versions are bumped",
+      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free"],
       "postUpgradeTasks": {
         "commands": ["bash scripts/update-checksums.sh"],
         "fileFilters": ["base/Dockerfile"],
