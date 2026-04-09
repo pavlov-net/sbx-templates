@@ -50,7 +50,7 @@ make install
 EOF
 
 # --- Stage 3: Main image ---
-FROM docker/sandbox-templates:claude-code-minimal@sha256:5dc9bb104416b772b02b194fd9fb065b73ca23e71c4cb450f501f13c99b160ec
+FROM docker/sandbox-templates:claude-code-minimal@sha256:d17605375b77b3466732e39080014224626a9039538a2a8721b7ca3a7dea6bdd
 
 # renovate: datasource=github-releases depName=sigstore/gitsign
 ARG GITSIGN_VERSION=0.14.0
