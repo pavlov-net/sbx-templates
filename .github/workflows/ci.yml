@@ -60,3 +60,13 @@ jobs:
           push: false
           build-args: |
             BASE_IMAGE=sbx-templates:base
+
+  ci:
+    if: always()
+    needs: [build-base, build-languages]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "${{ needs.build-base.result }}" != "success" || "${{ needs.build-languages.result }}" != "success" ]]; then
+            exit 1
+          fi
