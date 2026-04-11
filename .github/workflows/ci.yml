@@ -30,7 +30,6 @@ jobs:
         with:
           name: base-image
           path: /tmp/base-image.tar
-          retention-days: 1
 
   build-languages:
     needs: build-base
