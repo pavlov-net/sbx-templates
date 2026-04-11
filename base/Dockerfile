@@ -13,7 +13,7 @@ make install
 EOF
 
 # --- Stage 2: Main image ---
-FROM docker/sandbox-templates:claude-code-minimal@sha256:382e706bdac8e89da26c77b4ad383032fac2bda2407b95f2b3d3d82ad6b54f7b
+FROM docker/sandbox-templates:claude-code-minimal@sha256:41fd6c454773fde784f1016cc9cf111884ed298376da5e2fb6ced62a52b93aae
 
 # renovate: datasource=github-releases depName=dandavison/delta
 ARG DELTA_VERSION=0.19.2
