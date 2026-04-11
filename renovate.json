@@ -28,15 +28,5 @@
       "datasourceTemplate": "go"
     }
   ],
-  "packageRules": [
-    {
-      "description": "Update checksums when pinned tool versions are bumped",
-      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free"],
-      "postUpgradeTasks": {
-        "commands": ["bash scripts/update-checksums.sh"],
-        "fileFilters": ["base/Dockerfile"],
-        "executionMode": "update"
-      }
-    }
-  ]
+  "packageRules": []
 }
