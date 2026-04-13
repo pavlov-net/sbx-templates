@@ -1,34 +1,22 @@
 ARG BASE_IMAGE=sbx-templates:base
 FROM ${BASE_IMAGE}
 
-# System rustup install lives under /opt/rust, root-owned. RUSTUP_HOME
-# stays set at runtime so the rustup proxies in /opt/rust/cargo/bin can
-# locate the toolchain. CARGO_HOME is deliberately left unset so per-user
-# cargo operations (builds, `cargo install`) use the default ~/.cargo
-# cache — we don't want the user's work landing in root-owned /opt.
-ENV RUSTUP_HOME=/opt/rust/rustup
-# Append both the system rustup bin dir (cargo/rustc/rust-analyzer proxies)
-# and ~/.cargo/bin (for user-installed crates). Appended so the sfw shim
-# at /opt/socket/bin/cargo takes precedence.
-ENV PATH="${PATH}:/opt/rust/cargo/bin:/home/agent/.cargo/bin"
+# rustup is a self-mutating toolchain manager (add/remove components, update
+# toolchains, install targets), so it needs write access to its own home.
+# Install it under /home/agent as the agent user — this avoids the permission
+# issues a root-owned /opt/rust layout causes. Appended to PATH so the sfw
+# shim at /opt/socket/bin/cargo takes precedence.
+ENV PATH="${PATH}:/home/agent/.cargo/bin"
 
 USER root
 RUN <<EOF
 set -e
 
-# Rust toolchain via rustup, installed to /opt/rust. --no-modify-path
-# keeps it from touching any shell rc files (we manage PATH via ENV).
-curl -fsSL https://sh.rustup.rs -o /tmp/install-rustup.sh
-RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo sh /tmp/install-rustup.sh -y --no-modify-path
-rm /tmp/install-rustup.sh
-
-# rust-analyzer LSP (ships via rustup component).
-RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo /opt/rust/cargo/bin/rustup component add rust-analyzer
-
-# sfw shim for cargo, pointing at the system /opt install.
+# sfw shim for cargo, pointing at the agent-owned rustup install below.
+# /opt/socket/bin is root-owned, so the shim creation has to run as root.
 cat > /opt/socket/bin/cargo <<SHIM
 #!/bin/bash
-exec /opt/socket/bin/sfw /opt/rust/cargo/bin/cargo "\$@"
+exec /opt/socket/bin/sfw /home/agent/.cargo/bin/cargo "\$@"
 SHIM
 chmod +x /opt/socket/bin/cargo
 EOF
@@ -36,6 +24,16 @@ EOF
 USER agent
 RUN <<EOF
 set -e
+
+# Rust toolchain via rustup, installed into ~/.rustup + ~/.cargo (defaults).
+# --no-modify-path keeps it from touching shell rc files (we manage PATH via
+# ENV).
+curl -fsSL https://sh.rustup.rs -o /tmp/install-rustup.sh
+sh /tmp/install-rustup.sh -y --no-modify-path
+rm /tmp/install-rustup.sh
+
+# rust-analyzer LSP (ships via rustup component).
+~/.cargo/bin/rustup component add rust-analyzer
 
 # oh-my-zsh plugins — zsh-only sugar
 sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 rust cargo)/' ~/.zshrc
