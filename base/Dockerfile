@@ -92,6 +92,25 @@ SHIM
   chmod +x "/opt/socket/bin/${cmd}"
 done
 
+# uv (Python package manager) — installed in base so every template can use
+# it for scripts, managed Python, or one-off tooling. Installed root-owned
+# to /opt/uv/bin with sfw shims at /opt/socket/bin/{uv,uvx} so invocations
+# route through Socket Firewall regardless of shell or caller. UV_INSTALL_DIR
+# forces the destination, UV_NO_MODIFY_PATH keeps the installer from touching
+# any rc files, and UV_UNMANAGED_INSTALL skips the self-update receipt we
+# don't want inside a container image.
+curl -LsSf https://astral.sh/uv/install.sh -o /tmp/install-uv.sh
+UV_INSTALL_DIR=/opt/uv/bin UV_NO_MODIFY_PATH=1 UV_UNMANAGED_INSTALL=1 sh /tmp/install-uv.sh
+rm /tmp/install-uv.sh
+
+for cmd in uv uvx; do
+  cat > "/opt/socket/bin/${cmd}" <<SHIM
+#!/bin/bash
+exec /opt/socket/bin/sfw "/opt/uv/bin/${cmd}" "\$@"
+SHIM
+  chmod +x "/opt/socket/bin/${cmd}"
+done
+
 # Add third-party apt repos before updating
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -162,10 +181,11 @@ ln -s /opt/mold/bin/ld.mold /usr/local/bin/ld.mold
 rm /tmp/mold.tar.gz
 EOF
 
-# PATH: shim dir first, then /opt/bun/bin (real bun), then the inherited
-# base PATH, then bun's per-user global install dir at the end (so bun
-# install -g targets are discoverable without winning over the shims).
-ENV PATH="/opt/socket/bin:/opt/bun/bin:${PATH}:/home/agent/.bun/bin"
+# PATH: shim dir first, then /opt/bun/bin and /opt/uv/bin (real bun/uv),
+# then the inherited base PATH, then bun's per-user global install dir at
+# the end (so bun install -g targets are discoverable without winning over
+# the shims).
+ENV PATH="/opt/socket/bin:/opt/bun/bin:/opt/uv/bin:${PATH}:/home/agent/.bun/bin"
 
 # ssh-agent-proxy: container-side signing shim + auto-setup script.
 # The shim forwards git's signing requests to ssh-agent-proxy on the host.
