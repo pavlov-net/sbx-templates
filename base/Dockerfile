@@ -167,9 +167,23 @@ EOF
 # install -g targets are discoverable without winning over the shims).
 ENV PATH="/opt/socket/bin:/opt/bun/bin:${PATH}:/home/agent/.bun/bin"
 
+# ssh-agent-proxy: container-side signing shim + auto-setup script.
+# The shim forwards git's signing requests to ssh-agent-proxy on the host.
+# The setup script probes the proxy on first shell start and configures git
+# signing if reachable — zero impact when the proxy isn't running.
+COPY scripts/ssh-agent-proxy-sign.sh /usr/local/bin/ssh-agent-proxy-sign
+COPY scripts/ssh-agent-proxy-setup.sh /usr/local/lib/ssh-agent-proxy-setup.sh
+RUN chmod +x /usr/local/bin/ssh-agent-proxy-sign \
+ && echo '. /usr/local/lib/ssh-agent-proxy-setup.sh' >> /etc/sandbox-persistent.sh
+
 USER agent
 RUN <<EOF
 set -e
+
+# ssh-agent-proxy: .zshenv is sourced for ALL zsh invocations (interactive +
+# non-interactive), so this covers both user shells and Claude subprocesses.
+# BASH_ENV (set by base image to /etc/sandbox-persistent.sh) covers bash.
+printf '. /usr/local/lib/ssh-agent-proxy-setup.sh\n' > ~/.zshenv
 
 # oh-my-zsh + shell config
 # NOTE: do NOT prepend ~/.local/bin to PATH here — it's already in the
