@@ -56,7 +56,4 @@ bun install -g pyright
 
 # oh-my-zsh plugins — zsh-only sugar
 sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 python pip)/' ~/.zshrc
-
-# Claude plugins — language-specific
-claude plugin install pyright-lsp@claude-plugins-official
 EOF

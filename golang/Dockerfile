@@ -26,7 +26,4 @@ sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 golang)/' ~/.zshrc
 
 # gopls LSP
 go install golang.org/x/tools/gopls@latest
-
-# Claude plugins — language-specific
-claude plugin install gopls-lsp@claude-plugins-official
 EOF

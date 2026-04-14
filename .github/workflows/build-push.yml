@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       no-cache:
-        description: "Rebuild without Docker layer cache (picks up updated Claude plugins, etc.)"
+        description: "Rebuild without Docker layer cache"
         type: boolean
         default: false
 

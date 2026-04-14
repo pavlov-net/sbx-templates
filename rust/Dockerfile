@@ -37,7 +37,4 @@ rm /tmp/install-rustup.sh
 
 # oh-my-zsh plugins — zsh-only sugar
 sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 rust cargo)/' ~/.zshrc
-
-# Claude plugins — language-specific
-claude plugin install rust-analyzer-lsp@claude-plugins-official
 EOF

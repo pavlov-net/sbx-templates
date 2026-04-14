@@ -40,20 +40,14 @@ docker/sandbox-templates:claude-code-minimal
 |------|-------------|
 | [Socket Firewall](https://github.com/SocketDev/sfw-free) | Supply chain protection for package installs |
 
-### Claude Code plugins
-
-Plugins from [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) and [stuartparmenter/claude-plugin](https://github.com/stuartparmenter/claude-plugin):
-
-agent-sdk-dev, claude-code-setup, claude-md-management, code-review, commit-commands, explanatory-output-style, feature-dev, github, mcp-server-dev, plugin-dev, pr-review-toolkit, security-guidance, serena, skill-creator, auto-format, efficient-commands
-
 ## Language images
 
-| Image | Runtime | LSP | Claude plugin | sfw alias |
-|-------|---------|-----|---------------|-----------|
-| **bun** | Bun | typescript-language-server | typescript-lsp, frontend-design | `bun`, `bunx` |
-| **rust** | rustup + stable toolchain | rust-analyzer | rust-analyzer-lsp | `cargo` |
-| **golang** | Go (system-wide) | gopls | gopls-lsp | — |
-| **python** | uv + default Python | Pyright | pyright-lsp | `pip`, `uv` |
+| Image | Runtime | LSP | sfw alias |
+|-------|---------|-----|-----------|
+| **bun** | Bun | typescript-language-server | `bun`, `bunx` |
+| **rust** | rustup + stable toolchain | rust-analyzer | `cargo` |
+| **golang** | Go (system-wide) | gopls | — |
+| **python** | uv + default Python | Pyright | `pip`, `uv` |
 
 ## Local build
 
