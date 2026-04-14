@@ -31,6 +31,10 @@ ARG BUN_SHA256_ARM64=c40bc0ebca11bde7d75af497a654a874d0c7fd8d6a8d6031c173c10c906
 ARG SFW_VERSION=1.6.1
 ARG SFW_SHA256_AMD64=4a1e8b65e90fce7d5fd066cf0af6c93d512065fa4222a475c8d959a6bc14b9ff
 ARG SFW_SHA256_ARM64=df2eedb2daf2572eee047adb8bfd81c9069edcb200fc7d3710fca98ec3ca81a1
+# renovate: datasource=github-releases depName=rui314/mold
+ARG MOLD_VERSION=2.41.0
+ARG MOLD_SHA256_AMD64=a3696680d99e692970590a178bc3a33d78d60d1c6dc9db7a11b557b02b751f5d
+ARG MOLD_SHA256_ARM64=946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103472710
 
 # Explicit locale + terminal settings so tools don't silently depend on
 # upstream base image defaults.
@@ -140,6 +144,22 @@ curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSIO
 echo "${DELTA_SHA256}  /tmp/git-delta.deb" | sha256sum -c -
 dpkg -i /tmp/git-delta.deb
 rm /tmp/git-delta.deb
+
+# mold linker. Ships with bin/{mold,ld.mold}, lib/mold/mold-wrapper.so, and
+# libexec/mold/ld — keep the tarball layout in /opt/mold so mold can locate
+# its own wrapper/driver files, then symlink the two bins onto PATH.
+case "$ARCH" in
+  amd64) MOLD_ARCH=x86_64;  MOLD_SHA256="$MOLD_SHA256_AMD64" ;;
+  arm64) MOLD_ARCH=aarch64; MOLD_SHA256="$MOLD_SHA256_ARM64" ;;
+  *) echo "unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-${MOLD_ARCH}-linux.tar.gz" -o /tmp/mold.tar.gz
+echo "${MOLD_SHA256}  /tmp/mold.tar.gz" | sha256sum -c -
+tar -xzf /tmp/mold.tar.gz -C /opt
+mv "/opt/mold-${MOLD_VERSION}-${MOLD_ARCH}-linux" /opt/mold
+ln -s /opt/mold/bin/mold /usr/local/bin/mold
+ln -s /opt/mold/bin/ld.mold /usr/local/bin/ld.mold
+rm /tmp/mold.tar.gz
 EOF
 
 # PATH: shim dir first, then /opt/bun/bin (real bun), then the inherited
