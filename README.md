@@ -2,6 +2,8 @@
 
 Custom sandbox templates for [Docker AI Sandboxes](https://docs.docker.com/ai/sandboxes/) (`sbx`). Built on top of [`docker/sandbox-templates:claude-code-minimal`](https://github.com/docker/sbx-releases).
 
+See [USAGE.md](USAGE.md) for install, one-time host setup, creating/re-attaching sandboxes, credential storage, and git signing.
+
 ## Architecture
 
 A shared **base** image contains common tooling, with thin per-language layers on top:
