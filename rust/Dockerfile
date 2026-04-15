@@ -36,5 +36,5 @@ rm /tmp/install-rustup.sh
 ~/.cargo/bin/rustup component add rust-analyzer
 
 # oh-my-zsh plugins — zsh-only sugar
-sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 rust cargo)/' ~/.zshrc
+sed -i -E 's/^plugins=\(([^)]*)\)/plugins=(\1 rust)/' ~/.zshrc
 EOF
