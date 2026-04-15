@@ -1,6 +1,10 @@
 # ssh-agent-proxy-setup: configure git commit signing if the proxy is reachable.
-# Sourced by .zshenv (all zsh) and BASH_ENV via sandbox-persistent.sh (all bash).
-# Runs once per container — the stamp file prevents repeat probes.
+# Sourced by /etc/sandbox-persistent.sh, which both bash (via BASH_ENV) and zsh
+# (via ~/.zshenv) source, so it runs on every shell start. Probes the proxy
+# once per container — the stamp file prevents repeat probes. On success it
+# appends an `export SSH_AGENT_PROXY_URL=…` line to sandbox-persistent.sh so
+# future shells set the env var that git's signing subprocess
+# (ssh-agent-proxy-sign) reads to reach the right proxy host.
 #
 # https://github.com/stuartparmenter/ssh-agent-proxy
 
@@ -12,6 +16,12 @@ if [ ! -f "$HOME/.cache/ssh-agent-proxy/.configured" ]; then
     if [ -n "$_sap_pubkey" ]; then
         mkdir -p "$HOME/.cache/ssh-agent-proxy"
         printf '%s\n' "$_sap_pubkey" > "$HOME/.cache/ssh-agent-proxy/signing.pub"
+
+        # Persist the proxy URL globally so every future shell exports it
+        # before invoking git. The :- expansion preserves any explicit
+        # override the user sets before shell start.
+        printf 'export SSH_AGENT_PROXY_URL="${SSH_AGENT_PROXY_URL:-%s}"\n' "$_sap_proxy" \
+            | sudo tee -a /etc/sandbox-persistent.sh > /dev/null
 
         git config --global gpg.format ssh
         git config --global gpg.ssh.program /usr/local/bin/ssh-agent-proxy-sign

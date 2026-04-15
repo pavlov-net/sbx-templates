@@ -202,8 +202,10 @@ set -e
 
 # ssh-agent-proxy: .zshenv is sourced for ALL zsh invocations (interactive +
 # non-interactive), so this covers both user shells and Claude subprocesses.
-# BASH_ENV (set by base image to /etc/sandbox-persistent.sh) covers bash.
-printf '. /usr/local/lib/ssh-agent-proxy-setup.sh\n' > ~/.zshenv
+# Source /etc/sandbox-persistent.sh (the same file BASH_ENV points at for bash)
+# so both shells share one persistence chain — including any env-var exports
+# that ssh-agent-proxy-setup.sh appends to it at probe time.
+printf '. /etc/sandbox-persistent.sh\n' > ~/.zshenv
 
 # oh-my-zsh + shell config
 # NOTE: do NOT prepend ~/.local/bin to PATH here — it's already in the
