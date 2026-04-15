@@ -22,6 +22,7 @@ docker/sandbox-templates:claude-code-minimal
 | Tool | Description |
 |------|-------------|
 | [Bun](https://bun.sh) | JavaScript runtime (also provides npm/npx for LSP servers) |
+| [Python](https://www.python.org) | Default Python runtime (managed by uv, with `python`/`python3` on PATH) |
 | [GitHub CLI](https://cli.github.com) | GitHub from the command line |
 | [1Password CLI](https://developer.1password.com/docs/cli/) | Secrets management |
 | [delta](https://github.com/dandavison/delta) | Syntax-highlighted git diffs |

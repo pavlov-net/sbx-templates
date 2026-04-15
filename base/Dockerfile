@@ -24,6 +24,8 @@ ARG MOLD_SHA256_ARM64=946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103
 ARG BEADS_VERSION=1.0.0
 ARG BEADS_SHA256_AMD64=7057db1e92428fcf5c08d5dc6b07ead57e588b262cba78b9a26893d55bd29fdb
 ARG BEADS_SHA256_ARM64=9bb30413041e50dac945a0f8aa64011e4b345ebfd0a3f9b5fccd646c6dca61a7
+# renovate: datasource=python-version depName=python
+ARG PYTHON_VERSION=3.14.4
 
 # Explicit locale + terminal settings so tools don't silently depend on
 # upstream base image defaults.
@@ -209,6 +211,13 @@ printf '. /etc/sandbox-persistent.sh\n' > ~/.zshenv
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 sed -i 's/plugins=(git)/plugins=(git gh docker tmux fzf)/' ~/.zshrc
 printf 'set -g mouse on\nset -g history-limit 50000\nset -g default-terminal "tmux-256color"\n' > ~/.tmux.conf
+
+# Default Python via uv. --default installs the unversioned python/python3
+# symlinks alongside python${PYTHON_VERSION%.*} into ~/.local/bin (already on
+# PATH from the upstream image). Calls the real uv directly (not the sfw shim)
+# because this downloads a Python runtime binary from GitHub, not a package —
+# sfw's TLS interception rejects GitHub's cert here.
+/opt/uv/bin/uv python install $PYTHON_VERSION --default
 
 # Claude Code settings — merge into existing settings from base image
 mkdir -p ~/.claude

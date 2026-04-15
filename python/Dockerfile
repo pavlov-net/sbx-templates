@@ -1,9 +1,6 @@
 ARG BASE_IMAGE=sbx-templates:base
 FROM ${BASE_IMAGE}
 
-# renovate: datasource=python-version depName=python
-ARG PYTHON_VERSION=3.14.4
-
 USER root
 RUN <<EOF
 set -e
@@ -26,12 +23,8 @@ USER agent
 RUN <<EOF
 set -e
 
-# Install a default Python via uv. Calls the real uv directly (not the
-# sfw shim) because this downloads a Python runtime binary from GitHub,
-# not a package — sfw's TLS interception rejects GitHub's cert here.
-/opt/uv/bin/uv python install $PYTHON_VERSION
-
-# Pyright LSP. bun on PATH is the sfw shim from the base image.
+# Pyright LSP. bun on PATH is the sfw shim from the base image. The default
+# Python that pyright resolves against is installed in the base image.
 bun install -g pyright
 
 # oh-my-zsh plugins — zsh-only sugar
