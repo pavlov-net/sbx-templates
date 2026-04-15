@@ -1,5 +1,5 @@
 # --- Stage 1: Build gascity (gc) from source ---
-FROM golang:1.26@sha256:fcdb3e42c5544e9682a635771eac76a698b66de79b1b50ec5b9ce5c5f14ad775 AS gascity-build
+FROM golang:1.26@sha256:5f3787b7f902c07c7ec4f3aa91a301a3eda8133aa32661a3b3a3a86ab3a68a36 AS gascity-build
 
 ARG GASCITY_VERSION=1af897c4001da28c55369a5a97d4a603fa60190e
 
