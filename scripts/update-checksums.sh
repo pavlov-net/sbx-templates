@@ -11,6 +11,7 @@ YQ_VERSION=$(grep -oP 'ARG YQ_VERSION=\K.*' "$DOCKERFILE")
 DELTA_VERSION=$(grep -oP 'ARG DELTA_VERSION=\K.*' "$DOCKERFILE")
 BUN_VERSION=$(grep -oP 'ARG BUN_VERSION=\K.*' "$DOCKERFILE")
 SFW_VERSION=$(grep -oP 'ARG SFW_VERSION=\K.*' "$DOCKERFILE")
+BEADS_VERSION=$(grep -oP 'ARG BEADS_VERSION=\K.*' "$DOCKERFILE")
 
 update_arg() {
   local arg_name="$1" sha="$2"
@@ -59,4 +60,14 @@ if [ -n "$SFW_VERSION" ]; then
     update_arg "SFW_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
   done
   echo "Updated sfw-free checksums for v${SFW_VERSION}"
+fi
+
+# --- beads checksums (extracted from upstream checksums.txt) ---
+if [ -n "$BEADS_VERSION" ]; then
+  checksums=$(curl -fsSL "https://github.com/gastownhall/beads/releases/download/v${BEADS_VERSION}/checksums.txt")
+  for arch in amd64 arm64; do
+    sha=$(echo "$checksums" | awk -v f="beads_${BEADS_VERSION}_linux_${arch}.tar.gz" '$2 == f {print $1}')
+    update_arg "BEADS_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated beads checksums for v${BEADS_VERSION}"
 fi

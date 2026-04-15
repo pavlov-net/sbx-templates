@@ -1,18 +1,3 @@
-# --- Stage 1: Build gascity (gc) from source ---
-FROM golang:1.26@sha256:5f3787b7f902c07c7ec4f3aa91a301a3eda8133aa32661a3b3a3a86ab3a68a36 AS gascity-build
-
-ARG GASCITY_VERSION=1af897c4001da28c55369a5a97d4a603fa60190e
-
-RUN <<EOF
-set -e
-git clone --no-checkout https://github.com/gastownhall/gascity.git /src
-cd /src
-git fetch --depth 1 origin ${GASCITY_VERSION}
-git checkout FETCH_HEAD
-make install
-EOF
-
-# --- Stage 2: Main image ---
 FROM docker/sandbox-templates:claude-code-minimal@sha256:52f696b7664a955421db0abfde98075d75e4b30ced7bf59ccb2ea2855aade052
 
 # renovate: datasource=github-releases depName=dandavison/delta
@@ -35,6 +20,10 @@ ARG SFW_SHA256_ARM64=df2eedb2daf2572eee047adb8bfd81c9069edcb200fc7d3710fca98ec3c
 ARG MOLD_VERSION=2.41.0
 ARG MOLD_SHA256_AMD64=a3696680d99e692970590a178bc3a33d78d60d1c6dc9db7a11b557b02b751f5d
 ARG MOLD_SHA256_ARM64=946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103472710
+# renovate: datasource=github-releases depName=gastownhall/beads
+ARG BEADS_VERSION=1.0.0
+ARG BEADS_SHA256_AMD64=7057db1e92428fcf5c08d5dc6b07ead57e588b262cba78b9a26893d55bd29fdb
+ARG BEADS_SHA256_ARM64=9bb30413041e50dac945a0f8aa64011e4b345ebfd0a3f9b5fccd646c6dca61a7
 
 # Explicit locale + terminal settings so tools don't silently depend on
 # upstream base image defaults.
@@ -144,9 +133,6 @@ apt-get update && apt-get install -y --no-install-recommends \
 apt-get clean && rm -rf /var/lib/apt/lists/*
 EOF
 
-# gascity CLI (built from source in stage 1)
-COPY --from=gascity-build /go/bin/gc /usr/local/bin/gc
-
 RUN <<EOF
 set -e
 ARCH=$(dpkg --print-architecture)
@@ -179,6 +165,15 @@ mv "/opt/mold-${MOLD_VERSION}-${MOLD_ARCH}-linux" /opt/mold
 ln -s /opt/mold/bin/mold /usr/local/bin/mold
 ln -s /opt/mold/bin/ld.mold /usr/local/bin/ld.mold
 rm /tmp/mold.tar.gz
+
+# beads (bd) — issue tracker for AI agents, single Go binary from upstream releases.
+BEADS_SHA256=$([ "$ARCH" = "amd64" ] && echo "$BEADS_SHA256_AMD64" || echo "$BEADS_SHA256_ARM64")
+curl -fsSL "https://github.com/gastownhall/beads/releases/download/v${BEADS_VERSION}/beads_${BEADS_VERSION}_linux_${ARCH}.tar.gz" -o /tmp/beads.tar.gz
+echo "${BEADS_SHA256}  /tmp/beads.tar.gz" | sha256sum -c -
+tar -xzf /tmp/beads.tar.gz -C /tmp bd
+mv /tmp/bd /usr/local/bin/bd
+chmod +x /usr/local/bin/bd
+rm /tmp/beads.tar.gz
 EOF
 
 # PATH: shim dir first, then /opt/bun/bin and /opt/uv/bin (real bun/uv),
