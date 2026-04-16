@@ -24,6 +24,10 @@ ARG MOLD_SHA256_ARM64=946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103
 ARG BEADS_VERSION=1.0.2
 ARG BEADS_SHA256_AMD64=66280bca14581218684027fee000810c2e40a9c6fe00e876ff64bdcb01a036c0
 ARG BEADS_SHA256_ARM64=f7b60c2398305bdb18d4ece1c84b87951e5bbcd6966fa0d607ac16f9d6e11a4d
+# renovate: datasource=github-releases depName=j178/prek
+ARG PREK_VERSION=0.3.9
+ARG PREK_SHA256_AMD64=0ff74ba7658e81a2d78ab3b9f3ede45af04bab7040d5710b2ee5985cdfc76359
+ARG PREK_SHA256_ARM64=fda97d7e802ed84ee3c9e80b9aadb38abe04cfc6bce88da1aeb31300413891f5
 # renovate: datasource=python-version depName=python
 ARG PYTHON_VERSION=3.14.4
 
@@ -180,6 +184,22 @@ tar -xzf /tmp/beads.tar.gz -C /tmp bd
 mv /tmp/bd /usr/local/bin/bd
 chmod +x /usr/local/bin/bd
 rm /tmp/beads.tar.gz
+
+# prek — fast pre-commit reimplementation in Rust, single binary nested one
+# level deep inside the release tarball (prek-<triple>/prek), so strip the
+# leading directory on extract.
+case "$ARCH" in
+  amd64) PREK_ARCH=x86_64;  PREK_SHA256="$PREK_SHA256_AMD64" ;;
+  arm64) PREK_ARCH=aarch64; PREK_SHA256="$PREK_SHA256_ARM64" ;;
+  *) echo "unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+curl -fsSL "https://github.com/j178/prek/releases/download/v${PREK_VERSION}/prek-${PREK_ARCH}-unknown-linux-gnu.tar.gz" -o /tmp/prek.tar.gz
+echo "${PREK_SHA256}  /tmp/prek.tar.gz" | sha256sum -c -
+mkdir -p /tmp/prek-extract
+tar -xzf /tmp/prek.tar.gz -C /tmp/prek-extract --strip-components=1
+mv /tmp/prek-extract/prek /usr/local/bin/prek
+chmod +x /usr/local/bin/prek
+rm -rf /tmp/prek.tar.gz /tmp/prek-extract
 EOF
 
 # PATH: shim dir first, then /opt/bun/bin and /opt/uv/bin (real bun/uv),

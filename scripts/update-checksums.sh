@@ -12,6 +12,7 @@ DELTA_VERSION=$(grep -oP 'ARG DELTA_VERSION=\K.*' "$DOCKERFILE")
 BUN_VERSION=$(grep -oP 'ARG BUN_VERSION=\K.*' "$DOCKERFILE")
 SFW_VERSION=$(grep -oP 'ARG SFW_VERSION=\K.*' "$DOCKERFILE")
 BEADS_VERSION=$(grep -oP 'ARG BEADS_VERSION=\K.*' "$DOCKERFILE")
+PREK_VERSION=$(grep -oP 'ARG PREK_VERSION=\K.*' "$DOCKERFILE")
 
 update_arg() {
   local arg_name="$1" sha="$2"
@@ -70,4 +71,18 @@ if [ -n "$BEADS_VERSION" ]; then
     update_arg "BEADS_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
   done
   echo "Updated beads checksums for v${BEADS_VERSION}"
+fi
+
+# --- prek checksums (per-asset .sha256 sidecar files; aggregate sha256.sum
+# only covers npm/source tarballs, not the platform builds we install) ---
+if [ -n "$PREK_VERSION" ]; then
+  for arch in amd64 arm64; do
+    case "$arch" in
+      amd64) prek_arch=x86_64 ;;
+      arm64) prek_arch=aarch64 ;;
+    esac
+    sha=$(curl -fsSL "https://github.com/j178/prek/releases/download/v${PREK_VERSION}/prek-${prek_arch}-unknown-linux-gnu.tar.gz.sha256" | awk '{print $1}')
+    update_arg "PREK_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated prek checksums for v${PREK_VERSION}"
 fi

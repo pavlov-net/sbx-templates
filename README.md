@@ -37,6 +37,7 @@ docker/sandbox-templates:claude-code-minimal
 | [tmux](https://github.com/tmux/tmux) | Terminal multiplexer |
 | [zsh](https://www.zsh.org) + [oh-my-zsh](https://ohmyz.sh) | Shell with plugins (git, gh, docker, tmux, fzf) |
 | [beads](https://github.com/gastownhall/beads) (`bd`) | Issue/task tracker for coding agents |
+| [prek](https://github.com/j178/prek) | Fast Rust reimplementation of pre-commit |
 
 ### Security
 
@@ -80,7 +81,7 @@ Binary dependencies are verified during the build:
 
 | Dependency | Verification method |
 |------------|-------------------|
-| **bun**, **yq**, **delta**, **sfw**, **beads** | SHA256 checksums (hardcoded, auto-updated by Renovate) |
+| **bun**, **yq**, **delta**, **sfw**, **beads**, **prek** | SHA256 checksums (hardcoded, auto-updated by Renovate) |
 | **apt packages** | GPG-signed repos (GitHub CLI, 1Password) |
 
 Output images are signed in CI with [cosign](https://github.com/sigstore/cosign) (keyless via GitHub OIDC).
@@ -90,7 +91,7 @@ Output images are signed in CI with [cosign](https://github.com/sigstore/cosign)
 [Renovate](https://github.com/renovatebot/renovate) tracks and auto-updates:
 
 - Upstream base image digest (`docker/sandbox-templates:claude-code-minimal`)
-- Tool versions (bun, delta, yq, sfw, mold, beads)
+- Tool versions (bun, delta, yq, sfw, mold, beads, prek)
 - GitHub Actions versions
 
-Checksums for bun, yq, delta, sfw, and beads are automatically recomputed via `postUpgradeTasks` when their versions are bumped.
+Checksums for bun, yq, delta, sfw, beads, and prek are automatically recomputed via `postUpgradeTasks` when their versions are bumped.

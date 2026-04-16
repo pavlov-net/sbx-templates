@@ -31,7 +31,7 @@
   "packageRules": [
     {
       "description": "Update checksums when pinned tool versions are bumped",
-      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "gastownhall/beads"],
+      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "gastownhall/beads", "j178/prek"],
       "postUpgradeTasks": {
         "commands": ["bash scripts/update-checksums.sh"],
         "fileFilters": ["base/Dockerfile"],
