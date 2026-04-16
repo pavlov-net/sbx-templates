@@ -1,6 +1,9 @@
 ARG BASE_IMAGE=sbx-templates:base
 FROM ${BASE_IMAGE}
 
+# renovate: datasource=github-releases depName=rust-lang/rust
+ARG RUST_VERSION=1.95.0
+
 # rustup is a self-mutating toolchain manager (add/remove components, update
 # toolchains, install targets), so it needs write access to its own home.
 # Install it under /home/agent as the agent user — this avoids the permission
@@ -29,7 +32,7 @@ set -e
 # --no-modify-path keeps it from touching shell rc files (we manage PATH via
 # ENV).
 curl -fsSL https://sh.rustup.rs -o /tmp/install-rustup.sh
-sh /tmp/install-rustup.sh -y --no-modify-path
+sh /tmp/install-rustup.sh -y --no-modify-path --default-toolchain ${RUST_VERSION}
 rm /tmp/install-rustup.sh
 
 # rust-analyzer LSP (ships via rustup component).
