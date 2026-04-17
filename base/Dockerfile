@@ -106,6 +106,9 @@ SHIM
   chmod +x "/opt/socket/bin/${cmd}"
 done
 
+# Remove base image uv to save space — we install our own at /opt/uv/bin.
+rm -f /usr/local/bin/uv
+
 # Add third-party apt repos before updating
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
