@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 TEMPLATE_NAMES = ("base", "bun", "golang", "python", "rust")
-TEMPLATE_IMAGE_FMT = "ghcr.io/stuartparmenter/sbx-templates/{name}:latest"
+TEMPLATE_IMAGE_FMT = "ghcr.io/pavlov-net/sbx-templates/{name}:latest"
 STANDARD_NETWORK_ALLOWS = (
     "**.socket.dev:443",
     "mcp.context7.com:443",
