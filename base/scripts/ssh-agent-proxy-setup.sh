@@ -6,7 +6,7 @@
 # future shells set the env var that git's signing subprocess
 # (ssh-agent-proxy-sign) reads to reach the right proxy host.
 #
-# https://github.com/stuartparmenter/ssh-agent-proxy
+# https://github.com/pavlov-net/ssh-agent-proxy
 
 if [ ! -f "$HOME/.cache/ssh-agent-proxy/.configured" ]; then
     _sap_proxy="${SSH_AGENT_PROXY_URL:-http://host.docker.internal:7221/sign}"

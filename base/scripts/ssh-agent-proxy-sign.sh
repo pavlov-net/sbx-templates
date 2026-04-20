@@ -4,7 +4,7 @@
 # to ssh-agent-proxy running on the host. Non-sign operations (verify, etc.)
 # are passed through to the real ssh-keygen.
 #
-# https://github.com/stuartparmenter/ssh-agent-proxy
+# https://github.com/pavlov-net/ssh-agent-proxy
 #
 # Git invokes gpg.ssh.program as:
 #     <program> -Y sign -n git -f <signing-key> [file|-]
