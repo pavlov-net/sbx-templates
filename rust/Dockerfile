@@ -17,25 +17,11 @@ set -e
 
 # sfw shim for cargo, pointing at the agent-owned rustup install below.
 # /opt/socket/bin is root-owned, so the shim creation has to run as root.
-#
-# Workaround for https://github.com/SocketDev/sfw-free/issues/26: sfw injects
-# CARGO_HTTP_PROXY_CAINFO pointing at its ephemeral MITM CA, which *replaces*
-# (not augments) cargo's trust store. sfw only MITMs some cargo endpoints
-# (index.crates.io, static.crates.io) and transparently tunnels others
-# (crates.io/api/*), so cargo needs to trust both the system CAs and sfw's CA.
-# Merge them into one file and point cargo at the combined bundle.
-cat > /opt/socket/bin/cargo <<'SHIM'
+cat > /opt/socket/bin/cargo <<SHIM
 #!/bin/bash
-exec /opt/socket/bin/sfw /usr/bin/env bash -c '
-  combined=$(mktemp /tmp/sfw-cargo-ca.XXXXXX.crt)
-  trap "rm -f \"$combined\"" EXIT
-  cat /etc/ssl/certs/ca-certificates.crt "${CARGO_HTTP_PROXY_CAINFO:-/dev/null}" > "$combined"
-  export CARGO_HTTP_CAINFO="$combined"
-  export CARGO_HTTP_PROXY_CAINFO="$combined"
-  /home/agent/.cargo/bin/cargo "$@"
-' cargo "$@"
+exec /opt/socket/bin/sfw /home/agent/.cargo/bin/cargo "\$@"
 SHIM
-chmod 755 /opt/socket/bin/cargo
+chmod +x /opt/socket/bin/cargo
 EOF
 
 USER agent
