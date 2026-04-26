@@ -127,6 +127,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     build-essential \
     jq \
+    tini \
     tmux \
     ncurses-base \
     zsh \
@@ -273,3 +274,9 @@ git config --global url."https://github.com/".insteadOf "git@github.com:"
 EOF
 
 ENV SHELL=/usr/bin/zsh
+
+# Reap zombies: sbx overrides CMD with `sleep infinity`, so without an init
+# at PID 1 anything reparented to it (gh/zsh/ld.mold/rustc orphans from
+# interactive shells) accumulates as <defunct>. tini handles SIGCHLD and
+# reaps. `--` separates tini's own flags from the command sbx supplies.
+ENTRYPOINT ["/usr/bin/tini", "--"]
