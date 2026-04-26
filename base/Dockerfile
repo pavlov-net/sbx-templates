@@ -138,8 +138,13 @@ apt-get install -y --no-install-recommends \
     eza \
     fzf \
     gnupg \
+    git-lfs \
     gh \
     1password-cli
+
+# Register git-lfs filters in /etc/gitconfig so both root and the agent user
+# inherit the smudge/clean filters without needing per-user `git lfs install`.
+git lfs install --system --skip-repo
 
 # Cleanup apt caches
 apt-get clean
