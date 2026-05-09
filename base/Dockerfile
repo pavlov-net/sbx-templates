@@ -1,4 +1,4 @@
-FROM docker/sandbox-templates:claude-code-minimal@sha256:bdc64cdf85c3a7798cf379dedfcf3a07dbe49a0a8a4309b5e1544c056495bc13
+FROM docker/sandbox-templates:claude-code-minimal@sha256:5ca6f23bc4b197afe4e1235452ef725a5b38c22460f95d7d605ca78584295063
 
 # renovate: datasource=github-releases depName=dandavison/delta
 ARG DELTA_VERSION=0.19.2
