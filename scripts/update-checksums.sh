@@ -86,3 +86,42 @@ if [ -n "$PREK_VERSION" ]; then
   done
   echo "Updated prek checksums for v${PREK_VERSION}"
 fi
+
+# --- rust/Dockerfile checksums -------------------------------------------------
+# update_arg writes to the global $DOCKERFILE, so point it at rust/Dockerfile
+# for the cargo tooling below. amd64/arm64 -> Rust target triple naming.
+DOCKERFILE="rust/Dockerfile"
+
+triple_for() { [ "$1" = "amd64" ] && echo "x86_64-unknown-linux-gnu" || echo "aarch64-unknown-linux-gnu"; }
+musl_triple_for() { [ "$1" = "amd64" ] && echo "x86_64-unknown-linux-musl" || echo "aarch64-unknown-linux-musl"; }
+
+CARGO_BINSTALL_VERSION=$(grep -oP 'ARG CARGO_BINSTALL_VERSION=\K.*' "$DOCKERFILE")
+WILD_VERSION=$(grep -oP 'ARG WILD_VERSION=\K.*' "$DOCKERFILE")
+CARGO_CACHE_VERSION=$(grep -oP 'ARG CARGO_CACHE_VERSION=\K.*' "$DOCKERFILE")
+
+# --- cargo-binstall (musl tgz, no upstream checksum file, download and hash) ---
+if [ -n "$CARGO_BINSTALL_VERSION" ]; then
+  for arch in amd64 arm64; do
+    sha=$(curl -fsSL "https://github.com/cargo-bins/cargo-binstall/releases/download/v${CARGO_BINSTALL_VERSION}/cargo-binstall-$(musl_triple_for "$arch").tgz" | sha256sum | awk '{print $1}')
+    update_arg "CARGO_BINSTALL_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated cargo-binstall checksums for v${CARGO_BINSTALL_VERSION}"
+fi
+
+# --- wild (gnu tarball, no upstream checksum file, download and hash) ---
+if [ -n "$WILD_VERSION" ]; then
+  for arch in amd64 arm64; do
+    sha=$(curl -fsSL "https://github.com/wild-linker/wild/releases/download/${WILD_VERSION}/wild-linker-${WILD_VERSION}-$(triple_for "$arch").tar.gz" | sha256sum | awk '{print $1}')
+    update_arg "WILD_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated wild checksums for v${WILD_VERSION}"
+fi
+
+# --- cargo-cache (cargo-quickinstall prebuilt; upstream ships no binaries) ---
+if [ -n "$CARGO_CACHE_VERSION" ]; then
+  for arch in amd64 arm64; do
+    sha=$(curl -fsSL "https://github.com/cargo-bins/cargo-quickinstall/releases/download/cargo-cache-${CARGO_CACHE_VERSION}/cargo-cache-${CARGO_CACHE_VERSION}-$(triple_for "$arch").tar.gz" | sha256sum | awk '{print $1}')
+    update_arg "CARGO_CACHE_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated cargo-cache checksums for v${CARGO_CACHE_VERSION}"
+fi

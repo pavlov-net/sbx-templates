@@ -50,7 +50,7 @@ docker/sandbox-templates:claude-code-minimal
 | Image | Runtime | LSP | sfw alias |
 |-------|---------|-----|-----------|
 | **bun** | Bun | typescript-language-server | `bun`, `bunx` |
-| **rust** | rustup + stable toolchain | rust-analyzer | `cargo` |
+| **rust** | rustup + stable toolchain, wild linker, cargo-binstall, cargo-cache | rust-analyzer | `cargo` |
 | **golang** | Go (system-wide) | gopls | — |
 | **python** | uv + default Python | Pyright | `pip`, `uv` |
 
