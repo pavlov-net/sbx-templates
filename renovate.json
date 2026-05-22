@@ -31,10 +31,10 @@
   "packageRules": [
     {
       "description": "Update checksums when pinned tool versions are bumped",
-      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "gastownhall/beads", "j178/prek"],
+      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "gastownhall/beads", "j178/prek", "cargo-bins/cargo-binstall", "wild-linker", "cargo-cache"],
       "postUpgradeTasks": {
         "commands": ["bash scripts/update-checksums.sh"],
-        "fileFilters": ["base/Dockerfile"],
+        "fileFilters": ["base/Dockerfile", "rust/Dockerfile"],
         "executionMode": "update"
       }
     }
