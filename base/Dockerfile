@@ -29,7 +29,7 @@ ARG PREK_VERSION=0.4.3
 ARG PREK_SHA256_AMD64=8a8210d64476657cac3e797afa109011d8d872c09e3a407f50c5a4dde063b381
 ARG PREK_SHA256_ARM64=02e5731ce90e737bade91abef4c76c13495b9cc9290f609dfcb2e7b2a05b532e
 # renovate: datasource=python-version depName=python
-ARG PYTHON_VERSION=3.14.5
+ARG PYTHON_VERSION=3.14.6
 
 # Explicit locale + terminal settings so tools don't silently depend on
 # upstream base image defaults.
