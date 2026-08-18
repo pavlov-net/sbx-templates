@@ -11,6 +11,7 @@ YQ_VERSION=$(grep -oP 'ARG YQ_VERSION=\K.*' "$DOCKERFILE")
 DELTA_VERSION=$(grep -oP 'ARG DELTA_VERSION=\K.*' "$DOCKERFILE")
 BUN_VERSION=$(grep -oP 'ARG BUN_VERSION=\K.*' "$DOCKERFILE")
 SFW_VERSION=$(grep -oP 'ARG SFW_VERSION=\K.*' "$DOCKERFILE")
+MOLD_VERSION=$(grep -oP 'ARG MOLD_VERSION=\K.*' "$DOCKERFILE")
 BEADS_VERSION=$(grep -oP 'ARG BEADS_VERSION=\K.*' "$DOCKERFILE")
 PREK_VERSION=$(grep -oP 'ARG PREK_VERSION=\K.*' "$DOCKERFILE")
 
@@ -61,6 +62,20 @@ if [ -n "$SFW_VERSION" ]; then
     update_arg "SFW_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
   done
   echo "Updated sfw-free checksums for v${SFW_VERSION}"
+fi
+
+# --- mold checksums (no upstream checksum file, download and hash; mold uses
+# x86_64/aarch64 arch naming) ---
+if [ -n "$MOLD_VERSION" ]; then
+  for arch in amd64 arm64; do
+    case "$arch" in
+      amd64) mold_arch=x86_64 ;;
+      arm64) mold_arch=aarch64 ;;
+    esac
+    sha=$(curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-${mold_arch}-linux.tar.gz" | sha256sum | awk '{print $1}')
+    update_arg "MOLD_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated mold checksums for v${MOLD_VERSION}"
 fi
 
 # --- beads checksums (extracted from upstream checksums.txt) ---
