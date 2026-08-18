@@ -8,9 +8,9 @@ ARG CARGO_BINSTALL_VERSION=1.21.1
 ARG CARGO_BINSTALL_SHA256_AMD64=630c8f8803a686aa6779497f0f0fb51d49822fb5fc3c514d8ced33b34e338e6e
 ARG CARGO_BINSTALL_SHA256_ARM64=1dc2979f3c83aade9a1b4344589d14fafa63459b759222528d11419f5cca9cc2
 # renovate: datasource=crate depName=wild-linker
-ARG WILD_VERSION=0.9.0
-ARG WILD_SHA256_AMD64=deb6ee0e5caec798053ec4aafaba042e20a8edf91f08cb4d36268571cc628d3b
-ARG WILD_SHA256_ARM64=8855a347b9dfbc762e2492125ee82d09313124da3be616b1cd027a14eddfe8c0
+ARG WILD_VERSION=0.10.0
+ARG WILD_SHA256_AMD64=641265506a7c06cfb03181b8916ab663ec8407855db6d4db7f8450667d105283
+ARG WILD_SHA256_ARM64=e9d670e41f76481a68984f816e25bd2f124664db3ac935053e1a6fc41d2894c2
 # cargo-cache ships no upstream binaries; we pull the cargo-quickinstall
 # rebuild, so checksums are computed by scripts/update-checksums.sh.
 # renovate: datasource=crate depName=cargo-cache
