@@ -231,11 +231,14 @@ mv /tmp/prek-extract/prek /usr/local/bin/prek
 chmod +x /usr/local/bin/prek
 rm -rf /tmp/prek.tar.gz /tmp/prek-extract
 
-# OpenAI Codex CLI — static musl binary from the upstream GitHub release.
+# OpenAI Codex CLI — static musl binaries from the upstream GitHub release.
 # The release "codex-package" tarball is the same payload the npm package
-# vendors (bin/codex plus bundled rg/bwrap/zsh); only bin/codex is extracted
-# since the image already ships ripgrep and zsh, and sbx runs codex with
-# sandbox_mode=danger-full-access so bwrap is unused. Tags are rust-v<semver>.
+# vendors: bin/{codex,codex-code-mode-host} plus bundled rg/bwrap/zsh. Both
+# bin/ entries are installed side by side because codex resolves
+# codex-code-mode-host relative to its own executable and warns that Code
+# Mode is unavailable when it is missing. The bundled rg/bwrap/zsh are
+# skipped: the image already ships ripgrep, zsh, and system bubblewrap
+# (codex falls back to PATH for bwrap). Tags are rust-v<semver>.
 case "$ARCH" in
   amd64) CODEX_ARCH=x86_64;  CODEX_SHA256="$CODEX_SHA256_AMD64" ;;
   arm64) CODEX_ARCH=aarch64; CODEX_SHA256="$CODEX_SHA256_ARM64" ;;
@@ -244,9 +247,9 @@ esac
 curl -fsSL "https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION}/codex-package-${CODEX_ARCH}-unknown-linux-musl.tar.gz" -o /tmp/codex.tar.gz
 echo "${CODEX_SHA256}  /tmp/codex.tar.gz" | sha256sum -c -
 mkdir -p /tmp/codex-extract
-tar -xzf /tmp/codex.tar.gz -C /tmp/codex-extract bin/codex
-mv /tmp/codex-extract/bin/codex /usr/local/bin/codex
-chmod +x /usr/local/bin/codex
+tar -xzf /tmp/codex.tar.gz -C /tmp/codex-extract bin/codex bin/codex-code-mode-host
+mv /tmp/codex-extract/bin/codex /tmp/codex-extract/bin/codex-code-mode-host /usr/local/bin/
+chmod +x /usr/local/bin/codex /usr/local/bin/codex-code-mode-host
 rm -rf /tmp/codex.tar.gz /tmp/codex-extract
 EOF
 
