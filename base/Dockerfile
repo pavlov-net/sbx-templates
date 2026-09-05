@@ -231,14 +231,14 @@ mv /tmp/prek-extract/prek /usr/local/bin/prek
 chmod +x /usr/local/bin/prek
 rm -rf /tmp/prek.tar.gz /tmp/prek-extract
 
-# OpenAI Codex CLI — static musl binaries from the upstream GitHub release.
-# The release "codex-package" tarball is the same payload the npm package
-# vendors: bin/{codex,codex-code-mode-host} plus bundled rg/bwrap/zsh. Both
-# bin/ entries are installed side by side because codex resolves
-# codex-code-mode-host relative to its own executable and warns that Code
-# Mode is unavailable when it is missing. The bundled rg/bwrap/zsh are
-# skipped: the image already ships ripgrep, zsh, and system bubblewrap
-# (codex falls back to PATH for bwrap). Tags are rust-v<semver>.
+# OpenAI Codex CLI — upstream GitHub release "codex-package" tarball, the
+# same payload the npm package vendors. Installed with its layout intact
+# under /opt/codex because codex locates its pieces relative to its own
+# executable (via /proc/self/exe): codex-package.json describes the layout,
+# bin/codex-code-mode-host backs Code Mode, codex-path/rg is the ripgrep it
+# shells out to, and codex-resources/ holds a Codex-specific bwrap build
+# (with flags system bubblewrap lacks) plus its own zsh. /opt/codex/bin is
+# appended to PATH below. Tags are rust-v<semver>.
 case "$ARCH" in
   amd64) CODEX_ARCH=x86_64;  CODEX_SHA256="$CODEX_SHA256_AMD64" ;;
   arm64) CODEX_ARCH=aarch64; CODEX_SHA256="$CODEX_SHA256_ARM64" ;;
@@ -246,18 +246,16 @@ case "$ARCH" in
 esac
 curl -fsSL "https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION}/codex-package-${CODEX_ARCH}-unknown-linux-musl.tar.gz" -o /tmp/codex.tar.gz
 echo "${CODEX_SHA256}  /tmp/codex.tar.gz" | sha256sum -c -
-mkdir -p /tmp/codex-extract
-tar -xzf /tmp/codex.tar.gz -C /tmp/codex-extract bin/codex bin/codex-code-mode-host
-mv /tmp/codex-extract/bin/codex /tmp/codex-extract/bin/codex-code-mode-host /usr/local/bin/
-chmod +x /usr/local/bin/codex /usr/local/bin/codex-code-mode-host
-rm -rf /tmp/codex.tar.gz /tmp/codex-extract
+mkdir -p /opt/codex
+tar -xzf /tmp/codex.tar.gz -C /opt/codex
+rm /tmp/codex.tar.gz
 EOF
 
 # PATH: shim dir first, then /opt/bun/bin and /opt/uv/bin (real bun/uv),
-# then the inherited base PATH, then bun's per-user global install dir at
+# then /opt/codex/bin, then the inherited base PATH, then bun's per-user global install dir at
 # the end (so bun install -g targets are discoverable without winning over
 # the shims).
-ENV PATH="/opt/socket/bin:/opt/bun/bin:/opt/uv/bin:${PATH}:/home/agent/.bun/bin"
+ENV PATH="/opt/socket/bin:/opt/bun/bin:/opt/uv/bin:/opt/codex/bin:${PATH}:/home/agent/.bun/bin"
 
 # ssh-agent-proxy: container-side signing shim + auto-setup script.
 # The shim forwards git's signing requests to ssh-agent-proxy on the host.
