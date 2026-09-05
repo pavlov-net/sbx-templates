@@ -39,6 +39,7 @@ Store credentials once in sbx's per-machine secret vault:
 ```bash
 sbx secret set -g github       # prompts for token
 sbx secret set -g anthropic    # Claude API key, if you use it
+sbx secret set openai --oauth  # ChatGPT sign-in, if you use Codex (or `sbx secret set openai` for an API key)
 ```
 
 **How it works — and why this is safer than `gh auth login` inside the sandbox:** the sandbox never sees the raw token. When code inside the sandbox makes an HTTPS request to a known service endpoint (e.g. `api.github.com`, `api.anthropic.com`), sbx's egress proxy intercepts the request and injects the `Authorization` header on the way out. Tools like `gh`, `curl`, language SDKs, and Claude Code itself "just work" without any token ever being written to env, disk, or process memory inside the sandbox. A compromised or prompt-injected agent can use the credential for its intended service, but cannot exfiltrate it.
@@ -56,21 +57,23 @@ scripts/sbx-up create -t bun /path/to/workspace
 ```
 
 - `-t` — template name (`base`, `bun`, `golang`, `python`, `rust`) or any full image ref.
-- `--name` — sandbox name (default: `claude-<workspace-basename>`).
+- `-a`/`--agent` — `claude` (default) or `codex`. Both CLIs ship in every image; the agent is chosen per sandbox.
+- `--name` — sandbox name (default: `<agent>-<workspace-basename>`).
 - `--branch <name>` — create a git worktree on that branch.
 - Append `:ro` to a path for read-only mounts; pass multiple paths for extra mounts.
 
-**First run inside the sandbox:** `sbx-up create` drops you into a Claude Code session.
+**First run inside the sandbox:** `sbx-up create` drops you into a Claude Code session (or Codex with `--agent codex`).
 
 - **Claude.ai subscription users:** run `/login` inside the session to complete the OAuth flow. The token is stored in the sandbox's filesystem, so you only need to do it **once per sandbox** — subsequent `sbx run` / `sbx exec` sessions will already be authenticated.
 - **Anthropic API users:** skip `/login`. Instead, store your API key once on the host with `sbx secret set -g anthropic`; Claude Code will pick it up via the egress proxy with no interactive step inside the sandbox.
+- **Codex users:** store credentials once on the host with `sbx secret set openai --oauth` (ChatGPT sign-in) or `sbx secret set openai` (API key). Without either, `sbx create` warns and Codex starts logged out; `codex login` inside the sandbox with the device-code flow also works.
 
 ## 5. Re-attach to an existing sandbox
 
 Sandboxes are persistent containers — you create one per project and re-attach for each work session rather than re-creating. `sbx-up create` prints the sandbox name when it finishes (e.g. `claude-myproject`); use it with:
 
 ```bash
-sbx run claude-myproject            # resume the Claude Code agent
+sbx run claude-myproject            # resume the agent (Claude Code or Codex, per sandbox)
 sbx exec -it claude-myproject zsh   # drop into an interactive shell
 ```
 

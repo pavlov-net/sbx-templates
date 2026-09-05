@@ -20,7 +20,8 @@ STANDARD_NETWORK_ALLOWS = (
 )
 SSH_AGENT_PROXY_DEFAULT_PORT = 7221
 SSH_AGENT_PROXY_SETUP_SCRIPT = "/usr/local/lib/ssh-agent-proxy-setup.sh"
-AGENT = "claude"
+AGENTS = ("claude", "codex")
+DEFAULT_AGENT = "claude"
 SANDBOX_NAME_INVALID = re.compile(r"[^A-Za-z0-9.+-]+")
 
 
@@ -49,12 +50,12 @@ def parse_proxy_endpoint(value: str) -> tuple[str, int]:
     return host, port
 
 
-def default_sandbox_name(first_path: str) -> str:
+def default_sandbox_name(agent: str, first_path: str) -> str:
     workspace = first_path.split(":", 1)[0]
     abspath = Path(workspace).resolve()
     basename = abspath.name or abspath.parent.name
     sanitized = SANDBOX_NAME_INVALID.sub("-", basename).strip("-") or "sandbox"
-    return f"{AGENT}-{sanitized}"
+    return f"{agent}-{sanitized}"
 
 
 def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
@@ -74,12 +75,12 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
 def cmd_create(args: argparse.Namespace) -> int:
     image = resolve_template(args.template)
-    name = args.name or default_sandbox_name(args.paths[0])
+    name = args.name or default_sandbox_name(args.agent, args.paths[0])
 
     create_cmd = ["sbx", "create", "--template", image, "--name", name]
     if args.branch:
         create_cmd += ["--branch", args.branch]
-    create_cmd.append(AGENT)
+    create_cmd.append(args.agent)
     create_cmd += args.paths
     run(create_cmd)
 
@@ -125,8 +126,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_create = sub.add_parser(
         "create",
-        help="Create a claude sandbox using a sbx-templates image.",
-        description="Create a claude sandbox using a sbx-templates image and, if --ssh-agent-proxy is given, prime ssh-agent-proxy git signing.",
+        help="Create an agent sandbox using a sbx-templates image.",
+        description="Create a sandbox for an agent (claude by default) using a sbx-templates image and, if --ssh-agent-proxy is given, prime ssh-agent-proxy git signing.",
     )
     p_create.add_argument(
         "-t", "--template", required=True,
@@ -134,8 +135,12 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Template name ({'|'.join(TEMPLATE_NAMES)}) or full image ref.",
     )
     p_create.add_argument(
+        "-a", "--agent", default=DEFAULT_AGENT, choices=AGENTS,
+        help=f"Agent to run in the sandbox (default: {DEFAULT_AGENT}).",
+    )
+    p_create.add_argument(
         "--name",
-        help="Sandbox name (default: claude-<basename of first path>).",
+        help="Sandbox name (default: <agent>-<basename of first path>).",
     )
     p_create.add_argument(
         "--branch",
