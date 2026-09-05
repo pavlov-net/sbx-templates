@@ -14,6 +14,7 @@ SFW_VERSION=$(grep -oP 'ARG SFW_VERSION=\K.*' "$DOCKERFILE")
 MOLD_VERSION=$(grep -oP 'ARG MOLD_VERSION=\K.*' "$DOCKERFILE")
 BEADS_VERSION=$(grep -oP 'ARG BEADS_VERSION=\K.*' "$DOCKERFILE")
 PREK_VERSION=$(grep -oP 'ARG PREK_VERSION=\K.*' "$DOCKERFILE")
+CODEX_VERSION=$(grep -oP 'ARG CODEX_VERSION=\K.*' "$DOCKERFILE")
 
 update_arg() {
   local arg_name="$1" sha="$2"
@@ -100,6 +101,20 @@ if [ -n "$PREK_VERSION" ]; then
     update_arg "PREK_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
   done
   echo "Updated prek checksums for v${PREK_VERSION}"
+fi
+
+# --- codex checksums (extracted from upstream codex-package_SHA256SUMS; tags are rust-v<semver>) ---
+if [ -n "$CODEX_VERSION" ]; then
+  checksums=$(curl -fsSL "https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION}/codex-package_SHA256SUMS")
+  for arch in amd64 arm64; do
+    case "$arch" in
+      amd64) codex_arch=x86_64 ;;
+      arm64) codex_arch=aarch64 ;;
+    esac
+    sha=$(echo "$checksums" | awk -v f="codex-package-${codex_arch}-unknown-linux-musl.tar.gz" '$2 == f {print $1}')
+    update_arg "CODEX_SHA256_$(echo "$arch" | tr '[:lower:]' '[:upper:]')" "$sha"
+  done
+  echo "Updated codex checksums for v${CODEX_VERSION}"
 fi
 
 # --- rust/Dockerfile checksums -------------------------------------------------

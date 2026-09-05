@@ -28,6 +28,10 @@ ARG BEADS_SHA256_ARM64=501f38a1070d4b9b3b6261a86a3c92c4a52366869021560430a4bb003
 ARG PREK_VERSION=0.5.2
 ARG PREK_SHA256_AMD64=a4d51a463cb15ee2929368cc4884eec4ef33dce3ff5101b40e8ad7e1205b8f40
 ARG PREK_SHA256_ARM64=e9fb7d5e1ecab022c897ffdaa347a96a898c932584f03c8546c9965acb9d5a33
+# renovate: datasource=github-releases depName=openai/codex
+ARG CODEX_VERSION=0.153.4
+ARG CODEX_SHA256_AMD64=a822187e1a2420c61c5926721bfbd878701ed95547c9bb0d4de4498a16ba1821
+ARG CODEX_SHA256_ARM64=fc395cb043a1093ab0db34f44aba3199bfaa9ce640cd9be7fd588f44b0da64a4
 # renovate: datasource=python-version depName=python
 ARG PYTHON_VERSION=3.14.7
 
@@ -208,6 +212,24 @@ tar -xzf /tmp/prek.tar.gz -C /tmp/prek-extract --strip-components=1
 mv /tmp/prek-extract/prek /usr/local/bin/prek
 chmod +x /usr/local/bin/prek
 rm -rf /tmp/prek.tar.gz /tmp/prek-extract
+
+# OpenAI Codex CLI — static musl binary from the upstream GitHub release.
+# The release "codex-package" tarball is the same payload the npm package
+# vendors (bin/codex plus bundled rg/bwrap/zsh); only bin/codex is extracted
+# since the image already ships ripgrep and zsh, and sbx runs codex with
+# sandbox_mode=danger-full-access so bwrap is unused. Tags are rust-v<semver>.
+case "$ARCH" in
+  amd64) CODEX_ARCH=x86_64;  CODEX_SHA256="$CODEX_SHA256_AMD64" ;;
+  arm64) CODEX_ARCH=aarch64; CODEX_SHA256="$CODEX_SHA256_ARM64" ;;
+  *) echo "unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+curl -fsSL "https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION}/codex-package-${CODEX_ARCH}-unknown-linux-musl.tar.gz" -o /tmp/codex.tar.gz
+echo "${CODEX_SHA256}  /tmp/codex.tar.gz" | sha256sum -c -
+mkdir -p /tmp/codex-extract
+tar -xzf /tmp/codex.tar.gz -C /tmp/codex-extract bin/codex
+mv /tmp/codex-extract/bin/codex /usr/local/bin/codex
+chmod +x /usr/local/bin/codex
+rm -rf /tmp/codex.tar.gz /tmp/codex-extract
 EOF
 
 # PATH: shim dir first, then /opt/bun/bin and /opt/uv/bin (real bun/uv),

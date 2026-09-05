@@ -30,8 +30,13 @@
   ],
   "packageRules": [
     {
+      "description": "Codex releases are tagged rust-v<semver>",
+      "matchDepNames": ["openai/codex"],
+      "extractVersion": "^rust-v(?<version>.+)$"
+    },
+    {
       "description": "Update checksums when pinned tool versions are bumped",
-      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "rui314/mold", "gastownhall/beads", "j178/prek", "cargo-bins/cargo-binstall", "wild-linker", "cargo-cache"],
+      "matchDepNames": ["mikefarah/yq", "dandavison/delta", "bun", "SocketDev/sfw-free", "rui314/mold", "gastownhall/beads", "j178/prek", "openai/codex", "cargo-bins/cargo-binstall", "wild-linker", "cargo-cache"],
       "postUpgradeTasks": {
         "commands": ["bash scripts/update-checksums.sh"],
         "fileFilters": ["base/Dockerfile", "rust/Dockerfile"],
