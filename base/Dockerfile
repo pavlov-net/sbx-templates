@@ -153,6 +153,24 @@ git lfs install --system --skip-repo
 # Cleanup apt caches
 apt-get clean
 rm -rf /var/lib/apt/lists/*
+
+# Claude Code attribution off, via the managed-settings layer. sbx rewrites
+# ~/.claude/settings.json (and ~/.claude.json) at sandbox creation, so
+# anything baked into the user settings file is lost; the docs list those
+# paths as sandbox-managed and point at a separate settings layer instead.
+# /etc/claude-code/managed-settings.json is the Linux managed layer: highest
+# precedence, read at startup, untouched by sbx.
+mkdir -p /etc/claude-code
+cat > /etc/claude-code/managed-settings.json <<'JSON'
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  }
+}
+JSON
+chmod 644 /etc/claude-code/managed-settings.json
 EOF
 
 RUN <<EOF
@@ -272,15 +290,6 @@ printf 'set -g mouse on\nset -g history-limit 50000\nset -g default-terminal "tm
 # because this downloads a Python runtime binary from GitHub, not a package —
 # sfw's TLS interception rejects GitHub's cert here.
 /opt/uv/bin/uv python install $PYTHON_VERSION --default
-
-# Claude Code settings — merge into existing settings from base image
-mkdir -p ~/.claude
-if [ -f ~/.claude/settings.json ]; then
-  jq '. + {"attribution": {"commits": false, "pullRequests": false}}' ~/.claude/settings.json > ~/.claude/settings.json.tmp
-  mv ~/.claude/settings.json.tmp ~/.claude/settings.json
-else
-  echo '{"attribution":{"commits":false,"pullRequests":false}}' > ~/.claude/settings.json
-fi
 
 # SSH known hosts for GitHub
 mkdir -p ~/.ssh
