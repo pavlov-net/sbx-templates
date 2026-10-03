@@ -2,7 +2,7 @@ ARG BASE_IMAGE=sbx-templates:base
 FROM ${BASE_IMAGE}
 
 # renovate: datasource=github-releases depName=rust-lang/rust
-ARG RUST_VERSION=1.98.1
+ARG RUST_VERSION=1.99.0
 # renovate: datasource=github-releases depName=cargo-bins/cargo-binstall
 ARG CARGO_BINSTALL_VERSION=1.24.0
 ARG CARGO_BINSTALL_SHA256_AMD64=7ffe1832c4bc3148d00f02d51c1d96c9cccdec76a0fa20e6e5692201d78bcc0b
