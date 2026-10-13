@@ -33,7 +33,7 @@ ARG CODEX_VERSION=0.160.0
 ARG CODEX_SHA256_AMD64=4fcc47ab57f52ff75363951a8761146cd10c8288bd86fed45487dbb204a16b71
 ARG CODEX_SHA256_ARM64=7f0fe42ff22ecfa3a47bc4a34f5b22c4218b431a4ec0aba51c7d98299f07900c
 # renovate: datasource=python-version depName=python
-ARG PYTHON_VERSION=3.14.8
+ARG PYTHON_VERSION=3.15.0
 
 # Explicit locale + terminal settings so tools don't silently depend on
 # upstream base image defaults.
