@@ -2,7 +2,7 @@ ARG BASE_IMAGE=sbx-templates:base
 FROM ${BASE_IMAGE}
 
 # renovate: datasource=golang-version depName=go
-ARG GO_VERSION=1.27.2
+ARG GO_VERSION=1.27.3
 
 USER root
 RUN <<EOF
