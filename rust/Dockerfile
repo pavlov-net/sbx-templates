@@ -4,7 +4,7 @@ FROM ${BASE_IMAGE}
 # renovate: datasource=github-releases depName=rust-lang/rust
 ARG RUST_VERSION=1.99.1
 # renovate: datasource=github-releases depName=cargo-bins/cargo-binstall
-ARG CARGO_BINSTALL_VERSION=1.25.3
+ARG CARGO_BINSTALL_VERSION=1.26.1
 ARG CARGO_BINSTALL_SHA256_AMD64=1f72931713e9091478538c6c78c3f11f205b4f6f394f35e61835036b23929d2a
 ARG CARGO_BINSTALL_SHA256_ARM64=19ef7a058397f83d6b2cc83727fb8d38babd8ad657210c921b7771a9e8b3a6fb
 # renovate: datasource=crate depName=wild-linker
