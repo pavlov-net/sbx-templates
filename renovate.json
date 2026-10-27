@@ -5,6 +5,7 @@
     ":automergeDigest",
     ":automergePatch"
   ],
+  "platformCommit": "enabled",
   "customManagers": [
     {
       "customType": "regex",
