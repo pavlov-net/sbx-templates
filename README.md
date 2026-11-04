@@ -1,5 +1,10 @@
 # sbx-templates
 
+> [!WARNING]
+> **This repository is deprecated. Use [sbx-tools](https://github.com/pavlov-net/sbx-tools) instead.** The existing images remain available but no longer receive updates, including security fixes.
+>
+> `sbx-tools` delivers the same kind of tooling as kits on Docker's `claude` and `codex` agents. It uses bash instead of zsh, and doesn't include Go or the 1Password CLI.
+
 Custom sandbox templates for [Docker AI Sandboxes](https://docs.docker.com/ai/sandboxes/) (`sbx`). Built on top of [`docker/sandbox-templates:claude-code-minimal`](https://github.com/docker/sbx-releases).
 
 See [USAGE.md](USAGE.md) for install, one-time host setup, creating/re-attaching sandboxes, credential storage, and git signing.
