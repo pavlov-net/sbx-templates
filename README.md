@@ -1,5 +1,8 @@
 # sbx-templates
 
+> [!WARNING]
+> **This repository is deprecated. Use [sbx-tools](https://github.com/pavlov-net/sbx-tools) instead.** As `sbx` migrates to kits, we're following. The existing images remain available but no longer receive updates, including security fixes.
+
 Custom sandbox templates for [Docker AI Sandboxes](https://docs.docker.com/ai/sandboxes/) (`sbx`). Built on top of [`docker/sandbox-templates:claude-code-minimal`](https://github.com/docker/sbx-releases).
 
 See [USAGE.md](USAGE.md) for install, one-time host setup, creating/re-attaching sandboxes, credential storage, and git signing.
